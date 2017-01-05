@@ -7,6 +7,8 @@
 
 
 
-
+### Note ###
+This project is not well structured...
+STM32CubeMx makes it easy to build a HID application. For complete and safe HID application, please refer to ST usb hid lib.
 
 
