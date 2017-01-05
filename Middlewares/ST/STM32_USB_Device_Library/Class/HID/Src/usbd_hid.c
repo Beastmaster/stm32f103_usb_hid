@@ -381,7 +381,7 @@ static uint8_t  USBD_HID_Setup (USBD_HandleTypeDef *pdev,
       if( req->wValue >> 8 == HID_REPORT_DESC)
       {
         len = MIN(HID_MOUSE_REPORT_DESC_SIZE , req->wLength);
-				pbuf = HID_MOUSE_ReportDesc;
+        pbuf = HID_MOUSE_ReportDesc;
       }
       else if( req->wValue >> 8 == HID_DESCRIPTOR_TYPE)
       {

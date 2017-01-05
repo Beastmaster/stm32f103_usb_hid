@@ -48,16 +48,18 @@
 /* USER CODE BEGIN Includes */
 #include "usbd_hid.h"
 #include "usb_device_keyboard.h"
+
+//key0: PE4
+//key1: PE3
+//key2: PE2
+
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Error_Handler(void);
 static void MX_GPIO_Init(void);
@@ -72,110 +74,19 @@ static uint8_t chars[] = {
 	0x0b, // h
 	0x0c, // i
 };
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+void Error_Handler(void);
+static void MX_GPIO_Init(void);
+
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
-/*
-uint8_t USBD_HID_KeyBoard_SendChar(USBD_HandleTypeDef *pdev, uint8_t cc)
-{
-	extern uint8_t *chars;
-	uint8_t report[8] = {0,0,0x12,0,0,0,0,0};
-  uint8_t tmp = 0x00;    
-	switch ( cc )  
-  {
-		case 'a':
-				tmp = chars[4];
-				break;
-     case 'A':
-				tmp = chars[4];
-				break;
-		 case 'b':
-				tmp = chars[5];
-				break;
-		 case 'c':
-				tmp = chars[6];
-				break;
-		 case 'd':
-				tmp = chars[7];
-				break;
-		 case 'e':
-				tmp = chars[8];
-				break;
-		 case 'f':
-				tmp = chars[9];
-				break;
-		 case 'g':
-				tmp = chars[10];
-				break;
-		 case 'h':
-				tmp = chars[11];
-				break;
-		 case 'i':
-				tmp = chars[12];
-				break;
-		 case 'j':
-				tmp = chars[13];
-				break;
-		 case 'k':
-				tmp = chars[14];
-				break;
-		 case 'l':
-				tmp = chars[15];
-				break;
-		 case 'm':
-				tmp = chars[16];
-				break;
-		 case 'n':
-				tmp = chars[17];
-				break;
-		 case 'o':
-				tmp = chars[18];
-				break;
-		 case 'p':
-				tmp = chars[19];
-				break;
-		 case 'q':
-				tmp = chars[20];
-				break;
-		 case 'r':
-				tmp = chars[21];
-				break;
-		 case 's':
-				tmp = chars[22];
-				break;
-		 case 't':
-				tmp = chars[23];
-				break;
-		 case 'u':
-				tmp = chars[24];
-				break;
-		 case 'v':
-				tmp = chars[25];
-				break;
-		 case 'w':
-				tmp = chars[26];
-				break;
-		 case 'x':
-				tmp = chars[27];
-				break;
-		 case 'y':
-				tmp = chars[28];
-				break;
-		 case 'z':
-				tmp = chars[29];
-				break;
-     default:  
-        tmp = 0x13;  
-				break;
-  }  
-		report[2] = 0x11;
-		USBD_HID_SendReport (pdev, report, 8);
-	return 0;
-};*/
 
 /* USER CODE END 0 */
 
@@ -186,6 +97,7 @@ int main(void)
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern USBD_HandleTypeDef hUsbDeviceFS_Keyboard;
 uint8_t send_buf[8] = {0,0,0x11,0,0,0,0,0};
+uint8_t send_null[8] = {0,0,0,0,0,0,0,0};
 uint8_t cc = 'a';
 uint8_t tmp = 0x00;
 		
@@ -201,23 +113,11 @@ uint8_t tmp = 0x00;
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  //MX_USB_DEVICE_Init();
-	MX_USB_DEVICE_Keyboard_Init();
+  MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-  /* USER CODE END WHILE */
-//USBD_HID_SendReport(hUsbDeviceFS, send_buf, 10);
-		HAL_Delay(1000);
-		
-		//USBD_HID_SendReport(&hUsbDeviceFS_Keyboard, send_buf,8);
-
+	MX_USB_DEVICE_Keyboard_Init();
+	HAL_Delay(1000);
 		switch ( cc )  
   {
 		case 'a':
@@ -233,9 +133,30 @@ uint8_t tmp = 0x00;
         tmp = 0x13;  
 				break;
   }  
-	send_buf[2] = tmp;
+	//send_buf[2] = tmp;
 	USBD_HID_SendReport(&hUsbDeviceFS_Keyboard,send_buf,8);
-	HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_5);
+	USBD_HID_SendReport(&hUsbDeviceFS_Keyboard,send_null,8);
+  
+	HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5,GPIO_PIN_RESET);
+	//HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_5);
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+  /* USER CODE END WHILE */
+		if(HAL_GPIO_ReadPin(GPIOE,GPIO_PIN_3) == GPIO_PIN_RESET)
+		{
+			//USBD_HID_SendReport(&hUsbDeviceFS_Keyboard,send_null,8);
+			HAL_Delay(500);
+			USBD_HID_SendReport(&hUsbDeviceFS_Keyboard,send_buf,8);
+			HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5,GPIO_PIN_SET);
+		}
+		else
+		{
+			USBD_HID_SendReport(&hUsbDeviceFS_Keyboard,send_null,8);
+		}
   /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -313,15 +234,32 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_5, GPIO_PIN_RESET);
+  /*Configure GPIO pin : PE2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PE3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PE5 */
   GPIO_InitStruct.Pin = GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_5, GPIO_PIN_RESET);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
 }
 
